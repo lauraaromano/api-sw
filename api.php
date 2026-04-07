@@ -1,11 +1,7 @@
 <?php
 //CABECALHO
     header("Content-Type: application/json"); //Define o tipo de resposta
-
-    $metodo = $_SERVER['REQUEST_METHOD'];
-
-    echo "Método da requisição: ". $metodo;
-
+    
     //CONTEUDO
      $usuarios = [
           ["id" => 1, "nome" => "Maria Souza", "email" => "maria@email.com"],
