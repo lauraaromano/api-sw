@@ -1,31 +1,63 @@
 <?php
-    //CABECALHO
-    header("Content-Type: application/json"); //Define o tipo de resposta
+//CABEÇALHO
+header("Content-Type: application/json; charset=UTF-8"); //DEFINE O TIPO DE RESPOSTA
+$metodo = $_SERVER['REQUEST_METHOD'];
 
-    $metodo = $_SERVER['REQUEST_METHOD'];
+// RECUPERA O ARQUIVO JSON NA MESMA PASTA DO PROJETO
+$arquivo = 'usuarios.json';
 
-    //echo "Método de requesição: ".$metodo;
+// VERIFICA SE O ARQUIVO EXISTE, SE NÃO EXISTIR CRIA UM COM ARRAY VAZIO
+if (!file_exists($arquivo)) {
+    file_put_contents($arquivo, json_encode([], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
 
-    switch ($metodo) {
-        case 'GET':
-            echo "AQUI AÇÕES DO MÉTODO GET";
-            break;
-        case 'POST':
-            echo "AQUI AÇÕES DO MÉTODO POST";
-            break;
-        
-        default:
-            echo "MÉTODO NÃO ENCONTRADO";
-            break;
-    }
+// LÊ O CONTEÚDO DO ARQUIVO JSON
+$usuarios = json_decode(file_get_contents($arquivo), true);
 
-    // //CONTEUDO
-    //  $usuarios = [
-    //       ["id" => 1, "nome" => "Maria Souza", "email" => "maria@email.com"],
-    //       ["id" => 2, "nome" => "João Silva", "email" => "joao@email.com"]
-    // ];
+//CONTEÚDO
+// $usuarios = [
+// ["id" => 1, "nome" => "Maria Souza", "email" => "maria@email.com"],
+// ["id" => 2, "nome" => "João Silva", "email" => "joao@email.com"]
+//];
 
-    // //Converte para JSON e retorna
-    // echo json_encode($usuarios);
-    
-?>
+switch ($metodo) {
+    case 'GET':
+        //echo "AQUI AS AÇÕES DO METODO GET";
+        //CONVERTE PARA JSON E RETORNA
+        echo json_encode($usuarios, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        break;
+
+    case 'POST':
+        //echo "AQUI AS AÇÕES DO METODO POST";
+        //LER OS DADOS NO CORPO DA REQUISIÇÃO
+        $dados = json_decode(file_get_contents('php://input'), true);
+
+        // VERIFICA SE OS CAMPOS OBRIGATÓRIOS FORAM PREENCHIDOS
+        if (!isset($dados["id"]) || !isset($dados["nome"]) || !isset($dados["email"])) {
+            http_response_code(400);
+            echo json_encode(["erro" => "Dados incompletos."], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        // CRIA NOVO USUÁRIO
+        $novo_usuario = [
+            "id" => $dados["id"],
+            "nome" => $dados["nome"],
+            "email" => $dados["email"],
+        ];
+
+        // ADICIONA AO ARRAY DE USUÁRIOS
+        $usuarios[] = $novo_usuario;
+
+        // SALVA O ARRAY ATUALIZADO NO ARQUIVO JSON
+        file_put_contents($arquivo, json_encode($usuarios, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        // RETORNA MENSAGEM DE SUCESSO
+        echo json_encode(["mensagem" => "Usuário inserido com sucesso!", "usuarios" => $usuarios], JSON_UNESCAPED_UNICODE);
+        break;
+
+    default:
+        http_response_code(405); // Método não permitido
+        echo json_encode(["erro" => "Método não permitido!"], JSON_UNESCAPED_UNICODE);
+        break;
+}
